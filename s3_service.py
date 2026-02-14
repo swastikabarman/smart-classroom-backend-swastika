@@ -3,21 +3,32 @@
 
 import boto3
 import uuid
+import os
+from dotenv import load_dotenv
 
-BUCKET_NAME = "edtech-video-storage-2026"
+load_dotenv()
 
-s3_client = boto3.client("s3")
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
+AWS_REGION = os.getenv("AWS_REGION")
+BUCKET_NAME = os.getenv("BUCKET_NAME")
 
-def upload_video_to_s3(file):
-    file_extension = file.filename.split(".")[-1]
-    s3_filename = f"videos/{uuid.uuid4()}.{file_extension}"
 
-    s3_client.upload_fileobj(
-        file.file,
-        BUCKET_NAME,
-        s3_filename,
-        ExtraArgs={"ContentType": file.content_type}
-    )
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+    region_name=AWS_REGION
+)
 
-    video_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{s3_filename}"
-    return video_url
+
+def upload_video_to_s3(file_path: str):
+
+    extension = file_path.split(".")[-1]
+    key = f"videos/{uuid.uuid4()}.{extension}"
+
+    s3.upload_file(file_path, BUCKET_NAME, key)
+
+    return f"https://{BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{key}"
+
+
